@@ -1,0 +1,44 @@
+{
+  "name": "lane4core/contract",
+  "version": "1.0.0",
+  "description": "This package provides central interfaces for a domain driven design approach",
+  "type": "library",
+  "license": "MIT",
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "authors": [
+    {
+      "name": "Core Development",
+      "email": "devcore@lane4.digital"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "ext-pdo": "*"
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^2.0.4",
+    "squizlabs/php_codesniffer": "^3.11.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lane4core\\Contract\\ClassVersion\\": "src/classVersion/",
+      "Lane4core\\Contract\\Database\\": "src/database/",
+      "Lane4core\\Contract\\DotEnv\\": "src/dotenv/",
+      "Lane4core\\Contract\\Factory\\": "src/factory/"
+    }
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "echo '#!/usr/bin/env bash' > .git/hooks/pre-commit",
+      "echo 'bash ./support/pre-commit-hook.sh' >> .git/hooks/pre-commit",
+      "chmod +x .git/hooks/pre-commit"
+    ]
+  },
+  "homepage": "https://github.com/lane4core/contract",
+  "support": {
+    "issues": "https://github.com/lane4core/contract/issues",
+    "email": "devcore@lane4.digital"
+  },
+  "keywords": ["contract", "dotenv", "classversion", "factory", "database", "schema", "connection" ,"interfaces", "lane4core", "lane4 digital"]
+}
