@@ -15,7 +15,12 @@ use InvalidArgumentException;
  *
  * @package Lane4core\Contract\Database
  */
-interface DbQueryBuilderInterface extends DbQuerySharedInterface
+interface DbQueryBuilderInterface extends
+    DbWhereConditionInterface,
+    DbJoinInterface,
+    DbQueryExistsInterface,
+    DbOrderLimitInterface,
+    DbSqlGeneratorInterface
 {
     /**
      * Adds a Common Table Expression (CTE) to the query using WITH clause.
@@ -135,122 +140,13 @@ interface DbQueryBuilderInterface extends DbQuerySharedInterface
     public function from(string|DbQueryBuilderInterface $container, ?string $alias = null): self;
 
     /**
-     * Starts a WHERE condition clause.
-     *
-     * Initiates a condition chain by specifying the column to compare.
-     * If no column is provided, it can be used to add EXISTS or other
-     * standalone conditions. Returns a condition builder for specifying
-     * the comparison operator and value.
-     *
-     * @param string|null $column The column name to compare (optional for EXISTS)
-     * @param string|null $openBracket Optional opening bracket(s) for grouping conditions (e.g., '(' or '((')
-     * @return DbQueryConditionBuilderInterface Returns the condition builder for defining comparisons
-     */
-    public function where(?string $column = null, ?string $openBracket = null): DbQueryConditionBuilderInterface;
-
-    /**
-     * Adds an AND condition to the WHERE clause.
-     *
-     * Chains an additional condition with AND logic. Can be called after
-     * any condition method that returns the query builder. If no column
-     * is provided, can be used for standalone conditions like EXISTS.
-     *
-     * @param string|null $column The column name to compare (optional for EXISTS)
-     * @param string|null $openBracket Optional opening bracket(s) for grouping conditions
-     * @return DbQueryConditionBuilderInterface Returns the condition builder for defining comparisons
-     */
-    public function and(?string $column = null, ?string $openBracket = null): DbQueryConditionBuilderInterface;
-
-    /**
-     * Adds an OR condition to the WHERE clause.
-     *
-     * Chains an alternative condition with OR logic. Can be called after
-     * any condition method that returns the query builder. If no column
-     * is provided, can be used for standalone conditions like EXISTS.
-     *
-     * @param string|null $column The column name to compare (optional for EXISTS)
-     * @param string|null $openBracket Optional opening bracket(s) for grouping conditions
-     * @return DbQueryConditionBuilderInterface Returns the condition builder for defining comparisons
-     */
-    public function or(?string $column = null, ?string $openBracket = null): DbQueryConditionBuilderInterface;
-
-    /**
-     * Starts a JSON-specific WHERE condition
-     *
-     * @param string $column The JSON column name
-     * @param string|null $openBracket Optional opening bracket(s)
-     * @return DbQueryJsonConditionBuilderInterface For JSON-specific operations
-     */
-    public function whereJson(string $column, ?string $openBracket = null): DbQueryJsonConditionBuilderInterface;
-
-    /**
-     * Starts a JSON-specific AND condition
-     *
-     * @param string $column The JSON column name
-     * @param string|null $openBracket Optional opening bracket(s)
-     * @return DbQueryJsonConditionBuilderInterface For JSON-specific operations
-     */
-    public function andJson(string $column, ?string $openBracket = null): DbQueryJsonConditionBuilderInterface;
-
-    /**
-     * Starts a JSON-specific OR condition
-     *
-     * @param string $column The JSON column name
-     * @param string|null $openBracket Optional opening bracket(s)
-     * @return DbQueryJsonConditionBuilderInterface For JSON-specific operations
-     */
-    public function orJson(string $column, ?string $openBracket = null): DbQueryJsonConditionBuilderInterface;
-
-    /**
      * Starts a JSON-specific HAVING condition
      *
-     * @param string $column The JSON column name
+     * @param string $field The JSON column name
      * @param string|null $openBracket Optional opening bracket(s)
      * @return DbQueryJsonConditionBuilderInterface For JSON-specific operations
      */
-    public function havingJson(string $column, ?string $openBracket = null): DbQueryJsonConditionBuilderInterface;
-
-    /**
-     * Adds an INNER JOIN clause to the query.
-     *
-     * Joins another table using INNER JOIN, returning only rows where the
-     * join condition matches in both tables.
-     *
-     * @param string|DbQueryBuilderInterface $container The table name or subquery to join
-     * @param string $constraint The join condition (e.g., 'orders.user_id = users.id')
-     * @param string|null $alias Optional alias for the joined table (required for subqueries)
-     * @return self Returns the query builder instance for method chaining
-     * @throws InvalidArgumentException If $container is a subquery and $alias is null (enforced in implementation)
-     */
-    public function innerJoin(
-        string|DbQueryBuilderInterface $container,
-        string $constraint,
-        ?string $alias = null
-    ): self;
-
-    /**
-     * Adds a LEFT JOIN clause to the query.
-     *
-     * Joins another table or subquery using LEFT JOIN (LEFT OUTER JOIN), returning all rows
-     * from the left table and matching rows from the right table (NULL if no match).
-     *
-     * When using a subquery, an alias is required and will be enforced by the implementation.
-     *
-     * Examples:
-     * - Table: leftJoin('orders', 'orders.user_id = users.id', 'o')
-     * - Subquery: leftJoin($subquery, 'subq.id = users.id', 'subq')
-     *
-     * @param string|DbQueryBuilderInterface $container The table name or subquery to join
-     * @param string $constraint The join condition (e.g., 'orders.user_id = users.id')
-     * @param string|null $alias Optional alias for the joined table (required for subqueries)
-     * @return self Returns the query builder instance for method chaining
-     * @throws InvalidArgumentException If $container is a subquery and $alias is null (enforced in implementation)
-     */
-    public function leftJoin(
-        string|DbQueryBuilderInterface $container,
-        string $constraint,
-        ?string $alias = null
-    ): self;
+    public function havingJson(string $field, ?string $openBracket = null): DbQueryJsonConditionBuilderInterface;
 
     /**
      * Adds a RIGHT JOIN clause to the query.
@@ -347,10 +243,10 @@ interface DbQueryBuilderInterface extends DbQuerySharedInterface
      * Groups result rows by one or more columns. Typically used with aggregate
      * functions like COUNT, SUM, AVG. Multiple columns can be passed as variadic arguments.
      *
-     * @param string ...$columns One or more column names to group by
+     * @param string ...$fields One or more column names to group by
      * @return self Returns the query builder instance for method chaining
      */
-    public function groupBy(string ...$columns): self;
+    public function groupBy(string ...$fields): self;
 
     /**
      * Adds a HAVING clause for filtering grouped results.
@@ -364,40 +260,4 @@ interface DbQueryBuilderInterface extends DbQuerySharedInterface
      * @return DbQueryConditionBuilderInterface Returns the condition builder for defining comparisons
      */
     public function having(string $expression, ?string $openBracket = null): DbQueryConditionBuilderInterface;
-
-    /**
-     * Specifies the column and direction for sorting results.
-     *
-     * Defines the ORDER BY clause for sorting query results. Can be called
-     * multiple times to sort by multiple columns in sequence.
-     *
-     * @param string $column The column name to sort by
-     * @param string $direction The sort direction: 'ASC' (ascending) or 'DESC' (descending), default is 'ASC'
-     * @return self Returns the query builder instance for method chaining
-     */
-    public function orderBy(string $column, string $direction = 'ASC'): self;
-
-    /**
-     * Limits the number of rows returned and optionally sets an offset.
-     *
-     * Adds LIMIT and OFFSET clauses for pagination or restricting result size.
-     * Both parameters are optional to allow flexible usage.
-     *
-     * @param int|null $limit Maximum number of rows to return (null for no limit)
-     * @param int|null $offset Number of rows to skip before starting to return rows (null for no offset)
-     * @return self Returns the query builder instance for method chaining
-     */
-    public function limit(?int $limit = null, ?int $offset = null): self;
-
-    /**
-     * Generates an SQL query based on the specified dialect and preparation mode.
-     *
-     * Creates an SQL query string or a prepared query object, depending on the options provided.
-     *
-     * @param string $dialect The SQL dialect to use (e.g., 'mysql', 'pgsql', 'sqlite')
-     * @param bool $prepared Set to true if a prepared query should be returned, false for a raw SQL string
-     * @return string|DbPreparedQueryInterface Returns the raw SQL string or a prepared query object
-     * @throws InvalidArgumentException If an unsupported dialect is provided (enforced in implementation)
-     */
-    public function sql(string $dialect, bool $prepared = true): string|DbPreparedQueryInterface;
 }
